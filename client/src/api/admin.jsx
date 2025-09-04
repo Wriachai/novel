@@ -20,3 +20,11 @@ export const updateUserRole = async (user_id, role) => {
   const res = await api.put(`/user/update_role.php`, { user_id, role });
   return res.data;
 };
+
+export const readAllNovel = async (page = 1, limit = 10) => {
+  return await api.get(`/novel/read.php?page=${page}&limit=${limit}`);
+};
+
+export const updateNovelStatus = async (novel_id, status) => {
+  return await api.post("/novel/update_status.php", { novel_id, status });
+};

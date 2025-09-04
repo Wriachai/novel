@@ -56,12 +56,20 @@ if (!empty($data->google_token)) {
 
         if ($user->emailExists()) {
             $user->readOneByEmail();
+
+            if ($user->status != 1) {
+                http_response_code(403);
+                echo json_encode(["message" => "User is blocked."]);
+                exit;
+            }
         } else {
+            // สร้าง user ใหม่
             $user->firstname = $google_user->given_name ?? "";
             $user->lastname = $google_user->family_name ?? "";
             $user->display_name = $google_user->name ?? "";
             $user->password = password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
             $user->role = 'user';
+            $user->status = 1;
             $user->register();
         }
 

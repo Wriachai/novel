@@ -20,6 +20,8 @@ import {
   SelectValue
 } from "@/components/ui/select";
 
+import { Eye, List } from "lucide-react";
+
 const DataNovel = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,7 @@ const DataNovel = () => {
       setLoading(true);
       const res = await readAllNovel(pageNumber, pageSize);
       setData(res.data.records || []);
+      console.log(res.data.records)
       setTotalRecords(res.data.totalRecords || 0);
       setTotalPages(Math.ceil((res.data.totalRecords || 0) / pageSize));
       setPage(pageNumber);
@@ -50,7 +53,7 @@ const DataNovel = () => {
 
   const handleStatusChange = async (novel_id, newStatus) => {
     try {
-      await updateNovelStatus(novel_id, newStatus);
+      await updateNovelStatus(novel_id, newStatus); // API ต้องรับ string
       toast.success("Novel status updated");
       setData(prev => prev.map(n => n.novel_id === novel_id ? { ...n, status: newStatus } : n));
     } catch (err) {
@@ -65,13 +68,42 @@ const DataNovel = () => {
       accessorKey: "cover_image_url",
       header: "Cover",
       cell: ({ row }) => (
-        <img src={row.original.cover_image_url} alt={row.original.title} className="w-16 h-20 object-cover rounded-md" />
+        <img
+          src={row.original.cover_image_url.startsWith("http")
+            ? row.original.cover_image_url
+            : `${import.meta.env.VITE_UPLOAD_BASE}/${row.original.cover_image_url}`}
+          alt={row.original.title}
+          className="w-16 h-20 object-cover rounded-md"
+        />
       )
     },
     { accessorKey: "title", header: "Title" },
-    { accessorKey: "author_name", header: "Author" },
-    { accessorKey: "chapter_count", header: "Chapters" },
-    { accessorKey: "view_count", header: "Views" },
+    { accessorKey: "display_name", header: "Author" },
+
+    // Chapters with icon
+    {
+      accessorKey: "chapter_count",
+      header: () => "Chapter",
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-1">
+          <List className="w-4 h-4" />
+          <span>{row.original.chapter_count || 0}</span>
+        </div>
+      )
+    },
+
+    // Views with icon
+    {
+      accessorKey: "view_count",
+      header: () => "View",
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-1">
+          <Eye className="w-4 h-4" />
+          <span>{row.original.view_count?.toLocaleString() || 0}</span>
+        </div>
+      )
+    },
+
     {
       accessorKey: "status",
       header: "Status",
@@ -79,15 +111,19 @@ const DataNovel = () => {
         const novel = row.original;
         return (
           <Select
-            value={String(novel.status)}
-            onValueChange={(value) => handleStatusChange(novel.novel_id, parseInt(value))}
+            value={novel.status} // <-- ต้องตรงกับ value ของ SelectItem
+            onValueChange={(value) =>
+              handleStatusChange(novel.novel_id, value)
+            }
           >
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">Published</SelectItem>
-              <SelectItem value="0">Draft</SelectItem>
+              <SelectItem value="draft">แบบร่าง</SelectItem>
+              <SelectItem value="ongoing">กำลังดำเนินการ</SelectItem>
+              <SelectItem value="completed">จบแล้ว</SelectItem>
+              <SelectItem value="paused">หยุดชั่วคราว</SelectItem>
             </SelectContent>
           </Select>
         );

@@ -139,32 +139,28 @@ class User
 
     public function login()
     {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE email = :email AND status = 1 LIMIT 1";
+        $query = "SELECT * FROM " . $this->table_name . " WHERE email = :email LIMIT 1";
         $stmt = $this->conn->prepare($query);
-        $this->email = htmlspecialchars(strip_tags($this->email));
         $stmt->bindParam(":email", $this->email);
         $stmt->execute();
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($row && password_verify($this->password, $row['password'])) {
-
-            if ($row['status'] != 1) {
+            if ($row['status'] != 1) { // ✅ ตรวจสอบ status
                 return false;
             }
-
             $this->user_id = $row['user_id'];
             $this->firstname = $row['firstname'];
             $this->lastname = $row['lastname'];
             $this->display_name = $row['display_name'];
             $this->role = $row['role'];
             $this->status = $row['status'];
-            $this->created_at = $row['created_at'];
-            $this->updated_at = $row['updated_at'];
             return true;
         }
         return false;
     }
+
 
     public function readOne()
     {

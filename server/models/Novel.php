@@ -24,18 +24,29 @@ class Novel
         $this->conn = $db;
     }
 
-    // Read Novel
-    public function read($limit = 0, $offset = 0)
+    public function read($limit, $offset)
     {
-        $query = "SELECT n.novel_id, n.user_id, n.title, n.author_name, n.translator_name, n.description, n.cover_image_url, n.status, n.view_count, n.created_at, n.updated_at FROM " . $this->table_name . " as n LEFT JOIN chapters as c ON n.novel_id = c.novel_id where n.status != 'draft' GROUP BY n.novel_id ORDER BY c.created_at DESC";
-        if ($limit > 0) {
-            $query .= " LIMIT :limit OFFSET :offset";
-        }
+        $query = "SELECT 
+                n.*,
+                u.display_name,
+                (SELECT COUNT(*) FROM chapters c WHERE c.novel_id = n.novel_id) AS chapter_count
+              FROM " . $this->table_name . " n
+              LEFT JOIN users u ON n.user_id = u.user_id
+              ORDER BY n.created_at DESC
+              LIMIT :limit OFFSET :offset";
+
         $stmt = $this->conn->prepare($query);
-        if ($limit > 0) {
-            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
-        }
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt;
+    }
+
+
+    public function countAll()
+    {
+        $query = "SELECT COUNT(*) as total FROM " . $this->table_name;
+        $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;
     }
@@ -54,6 +65,22 @@ class Novel
         }
         $stmt->execute();
         return $stmt;
+    }
+
+    public function updateStatus()
+    {
+        $query = "UPDATE " . $this->table_name . " 
+              SET status = :status 
+              WHERE novel_id = :novel_id";
+        $stmt = $this->conn->prepare($query);
+
+        $this->status = htmlspecialchars(strip_tags($this->status));
+        $this->novel_id = htmlspecialchars(strip_tags($this->novel_id));
+
+        $stmt->bindParam(":status", $this->status, PDO::PARAM_STR);
+        $stmt->bindParam(":novel_id", $this->novel_id, PDO::PARAM_INT);
+
+        return $stmt->execute();
     }
 
     // Create Novel
