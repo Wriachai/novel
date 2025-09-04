@@ -14,30 +14,36 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
 $offset = ($page - 1) * $limit;
 
+// อ่านข้อมูล
 $stmt = $category->read($limit, $offset);
 $num = $stmt->rowCount();
 
-if ($num > 0) {
-    $categories_arr = array();
-    $categories_arr["records"] = array();
+// อ่าน total record
+$totalStmt = $category->countAll();
+$totalRecords = (int)$totalStmt->fetchColumn();
+$totalPages = ($limit > 0) ? ceil($totalRecords / $limit) : 1;
 
+$categories_arr = [
+    "records" => [],
+    "page" => $page,
+    "pageSize" => $limit,
+    "totalRecords" => $totalRecords,
+    "totalPages" => $totalPages
+];
+
+if ($num > 0) {
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         extract($row);
-
-        $category_item = array(
+        $category_item = [
             "category_id" => $category_id,
             "name" => $name,
             "description" => html_entity_decode($description),
             "created_at" => $created_at,
             "updated_at" => $updated_at
-        );
-        array_push($categories_arr["records"], $category_item);
+        ];
+        $categories_arr["records"][] = $category_item;
     }
-
-    http_response_code(200); // set response code - 200 OK
-    echo json_encode($categories_arr); // show categories in JSON format
-} else {
-    http_response_code(404); // set response code - 404 Not found
-    echo json_encode(array("message" => "No categories found."));
 }
-?>
+
+http_response_code(200);
+echo json_encode($categories_arr);

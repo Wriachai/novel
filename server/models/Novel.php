@@ -125,7 +125,7 @@ class Novel
         }
     }
 
-    public function readOne()
+    public function readOne($returnArray = false)
     {
         $query = "SELECT
                 n.*,
@@ -145,8 +145,8 @@ class Novel
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($row && $row['novel_id'] != null) {
+            // เซ็ตค่า property ของ object
             $this->novel_id = $row['novel_id'];
-            $this->user_id = $row['user_id'];
             $this->title = $row['title'];
             $this->author_name = $row['author_name'];
             $this->translator_name = $row['translator_name'];
@@ -154,10 +154,10 @@ class Novel
             $this->cover_image_url = $row['cover_image_url'];
             $this->status = $row['status'];
             $this->view_count = $row['view_count'];
-            $this->created_at = $row['created_at'];
             $this->updated_at = $row['updated_at'];
             $this->chapter_count = $row['chapter_count'];
 
+            // categories
             $this->categories = [];
             if ($row['category_ids']) {
                 $category_ids = explode(',', $row['category_ids']);
@@ -169,7 +169,15 @@ class Novel
                     ];
                 }
             }
+
+            // ถ้าขอ return array ก็ส่งออกไป
+            if ($returnArray) {
+                $row['categories'] = $this->categories;
+                return $row;
+            }
         }
+
+        return null;
     }
 
     // Update novel
@@ -269,6 +277,44 @@ class Novel
         $stmt->bindParam(':keywords', $keywords);
         $stmt->execute();
 
+        return $stmt;
+    }
+
+    // Read Novels ของผู้ใช้คนเดียว
+    public function readByUser($user_id, $limit = 0, $offset = 0)
+    {
+        $query = "SELECT 
+                 n.novel_id, 
+                 n.user_id, 
+                 n.title, 
+                 n.author_name, 
+                 n.translator_name,
+                 n.description, 
+                 n.cover_image_url, 
+                 n.status, 
+                 n.view_count,
+                 n.created_at, 
+                 n.updated_at,
+                 (SELECT COUNT(*) 
+                  FROM chapters c 
+                  WHERE c.novel_id = n.novel_id) AS chapter_count
+              FROM " . $this->table_name . " AS n
+              WHERE n.user_id = :user_id
+              ORDER BY n.updated_at DESC";
+
+        if ($limit > 0) {
+            $query .= " LIMIT :limit OFFSET :offset";
+        }
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+
+        if ($limit > 0) {
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
         return $stmt;
     }
 }

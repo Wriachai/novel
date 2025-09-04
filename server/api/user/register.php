@@ -1,10 +1,17 @@
 <?php
+// อนุญาตทุก origin ชั่วคราว (production ควรระบุ domain)
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Max-Age: 3600");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
+// ตอบ preflight request (OPTIONS) ก่อน
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// include database และ models ตามปกติ
 include_once '../../config/database.php';
 include_once '../../models/User.php';
 
@@ -12,7 +19,6 @@ $database = new Database();
 $db = $database->getConnection();
 
 $user = new User($db);
-
 $data = json_decode(file_get_contents("php://input"));
 
 if (
@@ -31,7 +37,7 @@ if (
     if ($user->emailExists()) {
         http_response_code(409); // Conflict
         echo json_encode(["message" => "Email already exists."]);
-        return;
+        exit();
     }
 
     if ($user->register()) {

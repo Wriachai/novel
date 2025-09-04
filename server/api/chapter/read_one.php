@@ -1,27 +1,31 @@
 <?php
+// ====== Headers ======
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: access");
 header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json; charset=UTF-8");
 
+// ====== Include database & model ======
 include_once '../../config/database.php';
 include_once '../../models/Chapter.php';
 
+// ====== Initialize ======
 $database = new Database();
 $db = $database->getConnection();
-
 $chapter = new Chapter($db);
 
+// ====== Validate input ======
 if (!isset($_GET['novel_id']) || !isset($_GET['chapter_number'])) {
     http_response_code(400);
     echo json_encode(["message" => "Bad Request. novel_id and chapter_number are required."]);
     exit();
 }
 
-$chapter->novel_id = $_GET['novel_id'];
-$chapter->chapter_number = $_GET['chapter_number'];
+$chapter->novel_id = (int)$_GET['novel_id'];
+$chapter->chapter_number = (int)$_GET['chapter_number'];
 
+// ====== Read chapter ======
 if ($chapter->readOne()) {
     $chapter_arr = [
         "novel_id" => (int)$chapter->novel_id,

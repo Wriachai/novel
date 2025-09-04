@@ -77,17 +77,25 @@ class Category
         return false;
     }
 
-    // Delete category
     public function delete()
     {
         $query = "DELETE FROM " . $this->table_name . " WHERE category_id = ?";
         $stmt = $this->conn->prepare($query);
-        $this->category_id = htmlspecialchars(strip_tags($this->category_id));
-        $stmt->bindParam(1, $this->category_id);
-        if ($stmt->execute()) {
+
+        // แปลง category_id เป็น integer
+        $this->category_id = (int)$this->category_id;
+
+        if ($stmt->execute([$this->category_id])) {
             return true;
         }
         return false;
     }
 
+    public function countAll()
+    {
+        $query = "SELECT COUNT(*) as total FROM " . $this->table_name;
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
 }

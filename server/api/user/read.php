@@ -10,13 +10,25 @@ $db = $database->getConnection();
 
 $user = new User($db);
 
-$stmt = $user->read();
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+$offset = ($page - 1) * $limit;
+
+$stmt = $user->read($limit, $offset);
 $num = $stmt->rowCount();
 
-if ($num > 0) {
-    $users_arr = [];
-    $users_arr["records"] = [];
+$totalRecords = $user->countAll(); // จำนวน record ทั้งหมด
+$totalPages = ceil($totalRecords / $limit);
 
+// เตรียม array สำหรับ response
+$users_arr = [];
+$users_arr["records"] = [];
+$users_arr["page"] = $page;
+$users_arr["pageSize"] = $limit;
+$users_arr["totalRecords"] = (int)$totalRecords;
+$users_arr["totalPages"] = (int)$totalPages;
+
+if ($num > 0) {
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         extract($row);
         $user_item = [
@@ -31,11 +43,9 @@ if ($num > 0) {
         ];
         array_push($users_arr["records"], $user_item);
     }
-
-    http_response_code(200); // OK
-    echo json_encode($users_arr);
-} else {
-    http_response_code(404); // Not Found
-    echo json_encode(["message" => "No users found."]);
 }
-?>
+
+// **ส่ง JSON ออกมาเพียงครั้งเดียว**
+http_response_code(200);
+echo json_encode($users_arr);
+exit(); // ป้องกัน output เพิ่มเติม
