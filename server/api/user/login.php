@@ -1,18 +1,7 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require_once '../../config/init.php';
 
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-require_once '../../vendor/autoload.php'; // JWT
+require_once '../../vendor/autoload.php';
 use Firebase\JWT\JWT;
 
 include_once '../../config/database.php';
@@ -30,8 +19,10 @@ $secret_key = "novel_secret_key";
 function createJWT($user, $secret_key)
 {
     $payload = [
-        "iss" => "localhost",
-        "aud" => "localhost",
+        "iss" => "http://localhost:5173",
+        "aud" => "http://localhost:5173",
+        // "iss" => "https://student.crru.ac.th/661463035/novel",
+        // "aud" => "https://student.crru.ac.th/661463035/novel",
         "iat" => time(),
         "exp" => time() + 86400, // หมดอายุ 1 วัน
         "data" => [

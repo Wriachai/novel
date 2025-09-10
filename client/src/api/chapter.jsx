@@ -29,9 +29,20 @@ export const readChapterByNumber = async (novel_id, chapter_number) => {
   });
 };
 
+export const readChapter = async (novel_id, chapter_number) => {
+  return await api.get("/chapter/read_one.php", {
+    params: { novel_id, chapter_number },
+  });
+};
+
 // ลบ chapter
 export const deleteChapter = async (novel_id, chapter_number) => {
-  return await api.delete("/chapter/delete.php", {
-    data: { novel_id, chapter_number }, // ต้องส่งใน body เพราะ axios.delete ส่ง params จะไม่เหมือน PUT/POST
+  return await api.post("/chapter/delete.php", {
+    novel_id,
+    chapter_number
   });
+};
+
+export const updateNovelView = async (novel_id) => {
+  return await api.post("/novel/update_view.php", { novel_id });
 };

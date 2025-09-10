@@ -1,18 +1,6 @@
 <?php
-// --- CORS headers ---
-header("Access-Control-Allow-Origin: *"); // หรือระบุ frontend domain เช่น http://localhost:5173
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, OPTIONS"); // เพิ่ม OPTIONS
-header("Access-Control-Max-Age: 3600");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+require_once '../../config/init.php';
 
-// ตอบ preflight request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-// --- ต่อด้วยโค้ดของคุณ ---
 include_once '../../config/database.php';
 include_once '../../models/Category.php';
 
@@ -31,12 +19,12 @@ if (!empty($data->name) && !empty($data->description)) {
 
     if ($category->create()) {
         http_response_code(201); // 201 Created
-        echo json_encode(array("message" => "Category was created."));
+        echo json_encode(array("message" => "สร้างหมวดหมู่เรียบร้อยแล้ว"));
     } else {
         http_response_code(503); // 503 Service Unavailable
-        echo json_encode(array("message" => "Unable to create category."));
+        echo json_encode(array("message" => "ไม่สามารถสร้างหมวดหมู่ได้"));
     }
 } else {
     http_response_code(400); // 400 Bad Request
-    echo json_encode(array("message" => "Unable to create category. Data is incomplete."));
+    echo json_encode(array("message" => "ไม่สามารถสร้างหมวดหมู่ได้ ข้อมูลไม่ครบ"));
 }

@@ -1,9 +1,5 @@
 <?php
-// อนุญาต CORS
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: access");
-header("Access-Control-Allow-Methods: GET");
-header("Content-Type: application/json; charset=UTF-8");
+require_once '../../config/init.php';
 
 include_once '../../config/database.php';
 include_once '../../models/Chapter.php';
@@ -18,7 +14,7 @@ $chapter = new Chapter($db);
 // ตรวจสอบ parameter
 if (!isset($_GET['novel_id']) || !isset($_GET['chapter_number'])) {
     http_response_code(400);
-    echo json_encode(["message" => "Bad Request. novel_id and chapter_number are required."]);
+    echo json_encode(["message" => "ข้อมูลไม่ครบ ต้องระบุ novel_id และ chapter_number"]);
     exit();
 }
 
@@ -41,5 +37,6 @@ if ($chapter->readChapterByNumber($chapter_number)) {
     echo json_encode($chapter_arr);
 } else {
     http_response_code(404);
-    echo json_encode(["message" => "Chapter not found."]);
+    echo json_encode(["message" => "ไม่พบตอนนิยาย"]);
 }
+?>

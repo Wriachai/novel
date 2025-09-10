@@ -1,6 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
+require_once '../../config/init.php';
 
 include_once '../../config/database.php';
 include_once '../../models/Novel.php';
@@ -15,7 +14,7 @@ $novel = new Novel($db);
 $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
 if ($user_id <= 0) {
     http_response_code(400);
-    echo json_encode(array("message" => "Invalid or missing user_id."));
+    echo json_encode(array("message" => "user_id ไม่ถูกต้องหรือขาดหายไป"));
     exit;
 }
 
@@ -54,5 +53,5 @@ if ($num > 0) {
     echo json_encode($novel_arr);
 } else {
     http_response_code(404);
-    echo json_encode(array("message" => "No novels found for this user."));
+    echo json_encode(array("message" => "ไม่พบนิยายสำหรับผู้ใช้รายนี้"));
 }

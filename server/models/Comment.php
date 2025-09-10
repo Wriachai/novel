@@ -35,7 +35,7 @@ class Comment
         $this->user_id = htmlspecialchars(strip_tags($this->user_id));
         $this->novel_id = htmlspecialchars(strip_tags($this->novel_id));
         $this->content = htmlspecialchars(strip_tags($this->content));
-        
+
         $this->chapter_number = !empty($this->chapter_number) ? htmlspecialchars(strip_tags($this->chapter_number)) : null;
         $this->parent_comment_id = !empty($this->parent_comment_id) ? htmlspecialchars(strip_tags($this->parent_comment_id)) : null;
 
@@ -69,7 +69,7 @@ class Comment
         } else {
             $query .= " AND c.chapter_number IS NULL";
         }
-        
+
         $query .= " ORDER BY c.created_at ASC";
 
         $stmt = $this->conn->prepare($query);
@@ -79,7 +79,7 @@ class Comment
         if (!is_null($this->chapter_number)) {
             $stmt->bindParam(":chapter_number", $this->chapter_number);
         }
-        
+
         $stmt->execute();
         return $stmt;
     }

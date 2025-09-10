@@ -70,23 +70,46 @@ class Follow
     return false;
   }
 
-  public function getFollowedNovels()
-  {
-    $query = "SELECT
-                    n.novel_id, n.title, n.cover_image_url, n.author_name, n.updated_at
-                  FROM
-                    " . $this->table_name . " f
-                  JOIN
-                    novels n ON f.novel_id = n.novel_id
-                  WHERE
-                    f.user_id = :user_id
-                  ORDER BY
-                    n.updated_at DESC";
+public function getFollowedNovels($user_id, $limit = 10, $offset = 0)
+{
+    $query = "SELECT 
+                 n.novel_id, 
+                 n.user_id,
+                 n.title, 
+                 n.author_name, 
+                 n.translator_name,
+                 n.description, 
+                 n.cover_image_url, 
+                 n.status, 
+                 n.view_count,
+                 n.created_at, 
+                 n.updated_at,
+                 (SELECT COUNT(*) FROM chapters c WHERE c.novel_id = n.novel_id) AS chapter_count
+              FROM " . $this->table_name . " f
+              JOIN novels n ON f.novel_id = n.novel_id
+              WHERE f.user_id = :user_id
+              ORDER BY n.updated_at DESC
+              LIMIT :limit OFFSET :offset";
 
     $stmt = $this->conn->prepare($query);
-    $stmt->bindParam(":user_id", $this->user_id);
+    $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+    $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
     $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    return $stmt;
-  }
+    // นับจำนวนทั้งหมด
+    $countQuery = "SELECT COUNT(*) as total FROM " . $this->table_name . " WHERE user_id = :user_id";
+    $countStmt = $this->conn->prepare($countQuery);
+    $countStmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+    $countStmt->execute();
+    $totalRecords = (int)$countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+    return [
+        "records" => $rows,
+        "totalRecords" => $totalRecords,
+        "totalPages" => $limit > 0 ? ceil($totalRecords / $limit) : 1
+    ];
+}
+
 }

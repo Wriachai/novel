@@ -16,12 +16,12 @@ import {
 
 import { NavLink, Link } from "react-router-dom";
 
-const NavDocuments = ({ items }) => {
+const NavDocuments = () => {
   const { isMobile } = useSidebar()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Documents</SidebarGroupLabel>
+      <SidebarGroupLabel>เอกสาร</SidebarGroupLabel>
       <SidebarMenu>
         <NavLink to="/admin/mynovel">
           {({ isActive }) => (
@@ -31,7 +31,7 @@ const NavDocuments = ({ items }) => {
                   ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
                   : "hover:bg-primary/5"}`}>
                 <IconBook />
-                <span>MyNovel</span>
+                <span>นิยายของฉัน</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}

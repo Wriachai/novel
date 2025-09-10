@@ -3,6 +3,7 @@ import {
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
+  getFilteredRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
@@ -30,18 +31,18 @@ const DataNovel = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
+  // ======= ดึงข้อมูลนิยาย =======
   const fetchNovels = async (pageNumber = 1) => {
     try {
       setLoading(true);
       const res = await readAllNovel(pageNumber, pageSize);
       setData(res.data.records || []);
-      console.log(res.data.records)
       setTotalRecords(res.data.totalRecords || 0);
       setTotalPages(Math.ceil((res.data.totalRecords || 0) / pageSize));
       setPage(pageNumber);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load novels");
+      toast.error("ไม่สามารถโหลดข้อมูลนิยายได้");
     } finally {
       setLoading(false);
     }
@@ -51,39 +52,43 @@ const DataNovel = () => {
     fetchNovels();
   }, []);
 
+  // ======= เปลี่ยนสถานะนิยาย =======
   const handleStatusChange = async (novel_id, newStatus) => {
     try {
-      await updateNovelStatus(novel_id, newStatus); // API ต้องรับ string
-      toast.success("Novel status updated");
+      await updateNovelStatus(novel_id, newStatus);
+      toast.success("เปลี่ยนสถานะนิยายเรียบร้อยแล้ว");
       setData(prev => prev.map(n => n.novel_id === novel_id ? { ...n, status: newStatus } : n));
     } catch (err) {
       console.error(err);
-      toast.error("Failed to update status");
+      toast.error("ไม่สามารถอัปเดตสถานะนิยายได้");
     }
   };
 
+  // ======= กำหนดคอลัมน์ตาราง =======
   const columns = [
     { id: "index", header: "#", cell: ({ row }) => (page - 1) * pageSize + row.index + 1 },
     {
       accessorKey: "cover_image_url",
-      header: "Cover",
+      header: "ภาพปก",
       cell: ({ row }) => (
-        <img
-          src={row.original.cover_image_url.startsWith("http")
-            ? row.original.cover_image_url
-            : `${import.meta.env.VITE_UPLOAD_BASE}/${row.original.cover_image_url}`}
-          alt={row.original.title}
-          className="w-16 h-20 object-cover rounded-md"
-        />
+        <div className="relative w-26 h-38">
+          <img
+            src={row.original.cover_image_url.startsWith("http")
+              ? row.original.cover_image_url
+              : `${import.meta.env.VITE_UPLOAD_BASE}/${row.original.cover_image_url}`}
+            alt={row.original.title}
+            className="w-full h-full object-cover rounded-md"
+          />
+        </div>
       )
     },
-    { accessorKey: "title", header: "Title" },
-    { accessorKey: "display_name", header: "Author" },
+    { accessorKey: "title", header: "ชื่อเรื่อง", filterFn: "includesString", },
+    { accessorKey: "display_name", header: "ผู้สร้าง" },
 
-    // Chapters with icon
+    // จำนวนตอน
     {
       accessorKey: "chapter_count",
-      header: () => "Chapter",
+      header: () => "จำนวนตอน",
       cell: ({ row }) => (
         <div className="flex items-center space-x-1">
           <List className="w-4 h-4" />
@@ -92,10 +97,10 @@ const DataNovel = () => {
       )
     },
 
-    // Views with icon
+    // จำนวนผู้ชม
     {
       accessorKey: "view_count",
-      header: () => "View",
+      header: () => "ผู้ชม",
       cell: ({ row }) => (
         <div className="flex items-center space-x-1">
           <Eye className="w-4 h-4" />
@@ -104,20 +109,21 @@ const DataNovel = () => {
       )
     },
 
+    // สถานะ
     {
       accessorKey: "status",
-      header: "Status",
+      header: "สถานะ",
       cell: ({ row }) => {
         const novel = row.original;
         return (
           <Select
-            value={novel.status} // <-- ต้องตรงกับ value ของ SelectItem
+            value={novel.status} // ต้องตรงกับ value ของ SelectItem
             onValueChange={(value) =>
               handleStatusChange(novel.novel_id, value)
             }
           >
             <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Select status" />
+              <SelectValue placeholder="เลือกสถานะ" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="draft">แบบร่าง</SelectItem>
@@ -136,21 +142,24 @@ const DataNovel = () => {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
   });
 
-  if (loading) return <div className="p-4">Loading novels...</div>;
+  if (loading) return <div className="p-4">กำลังโหลดข้อมูลนิยาย...</div>;
 
   return (
     <div className="w-full">
+      {/* ฟิลเตอร์ชื่อเรื่อง */}
       <div className="flex items-center py-4 gap-2">
         <Input
-          placeholder="Filter by title..."
+          placeholder="ค้นหาชื่อเรื่อง..."
           value={table.getColumn("title")?.getFilterValue() ?? ""}
           onChange={(e) => table.getColumn("title")?.setFilterValue(e.target.value)}
           className="max-w-sm"
         />
       </div>
 
+      {/* ตารางนิยาย */}
       <div className="overflow-hidden rounded-md border shadow-sm">
         <Table>
           <TableHeader>
@@ -178,7 +187,7 @@ const DataNovel = () => {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center h-24">
-                  No results.
+                  ไม่พบผลลัพธ์
                 </TableCell>
               </TableRow>
             )}
@@ -186,9 +195,10 @@ const DataNovel = () => {
         </Table>
       </div>
 
+      {/* การแบ่งหน้า */}
       <div className="flex items-center justify-between text-sm text-gray-500 py-4">
         <div>
-          Page {page} of {totalPages}
+          หน้า {page} จาก {totalPages}
         </div>
         <div className="flex space-x-2">
           <Button
@@ -197,7 +207,7 @@ const DataNovel = () => {
             onClick={() => fetchNovels(page - 1)}
             disabled={page <= 1}
           >
-            Previous
+            ก่อนหน้า
           </Button>
           <Button
             variant="outline"
@@ -205,7 +215,7 @@ const DataNovel = () => {
             onClick={() => fetchNovels(page + 1)}
             disabled={page >= totalPages}
           >
-            Next
+            ถัดไป
           </Button>
         </div>
       </div>

@@ -28,3 +28,7 @@ export const readAllNovel = async (page = 1, limit = 10) => {
 export const updateNovelStatus = async (novel_id, status) => {
   return await api.post("/novel/update_status.php", { novel_id, status });
 };
+
+export const readUserNovelCategory = async () => {
+  return await api.get(`/admin/read_counts.php`); // ใช้ API ใหม่
+};

@@ -247,4 +247,18 @@ class User
         $stmt->execute();
         return $stmt->fetchColumn();
     }
+
+    public function updatePassword()
+    {
+        $query = "UPDATE " . $this->table_name . " SET password = :password, updated_at = NOW() WHERE user_id = :user_id";
+        $stmt = $this->conn->prepare($query);
+
+        $this->password = htmlspecialchars(strip_tags($this->password));
+        $this->user_id = htmlspecialchars(strip_tags($this->user_id));
+
+        $stmt->bindParam(':password', $this->password);
+        $stmt->bindParam(':user_id', $this->user_id);
+
+        return $stmt->execute();
+    }
 }

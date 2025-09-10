@@ -1,23 +1,22 @@
-// components/ProtectedRoute.jsx
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import useAuthStore from "../store/novel-store";
+import useAuthStore from "@/store/novel-store";
 
-const ProtectedRoute = ({ allowedRoles }) => {
+const ProtectedRoute = ({ allowedRoles, children }) => {
   const { user } = useAuthStore();
 
-  // ถ้ายังไม่ login
+  // ❌ ยังไม่ได้ login
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // ถ้า role ไม่ตรง
-  if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/not-found" replace />;
+  // ❌ มี allowedRoles แต่ role ไม่ตรง
+  if (Array.isArray(allowedRoles) && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
   }
 
-  // ถ้าผ่าน → render children
-  return <Outlet />;
+  // ✅ ผ่าน
+  return children ? children : <Outlet />;
 };
 
 export default ProtectedRoute;

@@ -38,32 +38,15 @@ import {
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
+    name: "ผู้ดูแล",
+    email: "admin@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
 
   navSecondary: [
-    { title: "Settings", url: "#", icon: IconSettings },
-    { title: "Get Help", url: "#", icon: IconHelp },
-    { title: "Search", url: "#", icon: IconSearch },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
+    { title: "การตั้งค่า", url: "#", icon: IconSettings },
+    { title: "ช่วยเหลือ", url: "#", icon: IconHelp },
+    { title: "ค้นหา", url: "#", icon: IconSearch },
   ],
 }
 
@@ -78,7 +61,7 @@ const AppSidebar = (props) => {
               className="data-[slot=sidebar-menu-button]:!p-1.5 hover:bg-primary/0 active:bg-primary/0">
               <Link to={"/admin"}>
                 <IconCrown className="!size-5" />
-                <span className="text-base font-semibold">Admin</span>
+                <span className="text-base font-semibold">ผู้ดูแลระบบ</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -87,8 +70,8 @@ const AppSidebar = (props) => {
 
       <SidebarContent>
         <NavMain />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavDocuments />
+        <NavSecondary className="mt-auto" />
       </SidebarContent>
 
       <SidebarFooter>

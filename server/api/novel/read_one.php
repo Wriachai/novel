@@ -1,9 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: access");
-header("Access-Control-Allow-Methods: GET");
-header("Access-Control-Allow-Credentials: true");
-header("Content-Type: application/json; charset=UTF-8");
+require_once '../../config/init.php';
 
 include_once '../../config/database.php';
 include_once '../../models/Novel.php';
@@ -15,37 +11,41 @@ $novel = new Novel($db);
 
 if (!isset($_GET['novel_id'])) {
     http_response_code(400);
-    echo json_encode(array("message" => "Bad Request. novel_id is missing."));
-    exit(); // หยุดการทำงานทันที
+    echo json_encode(["message" => "คำขอไม่ถูกต้อง novel_id หายไป"]);
+    exit();
 }
 
-$novel->novel_id = $_GET['novel_id'];
+$novel_id = $_GET['novel_id'];
+$novel->novel_id = $novel_id;
 
-$novel->readOne();
+// ถ้ามี user_id ส่งมาด้วย จะเช็คว่า user กดไลค์หรือยัง
+$user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : null;
 
-if ($novel->title != null) {
-    $novel_arr = array(
-        "novel_id" => $novel->novel_id,
-        "title" => $novel->title,
-        "author_name" => $novel->author_name,
-        "translator_name" => $novel->translator_name,
-        "description" => $novel->description,
-        "cover_image_url" => $novel->cover_image_url,
-        "status" => $novel->status,
-        "view_count" => $novel->view_count,
-        "updated_at" => $novel->updated_at,
-        "chapter_count" => $novel->chapter_count,
-        "categories" => $novel->categories // *** 2. เพิ่ม categories ใน array ***
-    );
+$novel_data = $novel->readOne(true);
 
-    // set response code - 200 OK
+if ($novel_data) {
+    // --- นับจำนวนไลค์ทั้งหมด ---
+    $likeQuery = "SELECT COUNT(*) as like_count FROM likes WHERE novel_id = :novel_id";
+    $likeStmt = $db->prepare($likeQuery);
+    $likeStmt->bindParam(":novel_id", $novel_id, PDO::PARAM_INT);
+    $likeStmt->execute();
+    $like_count = (int)$likeStmt->fetch(PDO::FETCH_ASSOC)['like_count'];
+    $novel_data['like_count'] = $like_count;
+
+    // --- ตรวจสอบว่า user กดไลค์หรือยัง ---
+    $novel_data['is_liked'] = false;
+    if ($user_id) {
+        $checkQuery = "SELECT 1 FROM likes WHERE novel_id = :novel_id AND user_id = :user_id LIMIT 1";
+        $checkStmt = $db->prepare($checkQuery);
+        $checkStmt->bindParam(":novel_id", $novel_id, PDO::PARAM_INT);
+        $checkStmt->bindParam(":user_id", $user_id, PDO::PARAM_INT);
+        $checkStmt->execute();
+        $novel_data['is_liked'] = $checkStmt->rowCount() > 0;
+    }
+
     http_response_code(200);
-    // make it json format
-    echo json_encode($novel_arr);
+    echo json_encode($novel_data);
 } else {
-    // set response code - 404 Not found
     http_response_code(404);
-    // tell the user novel does not exist
-    echo json_encode(array("message" => "Novel does not exist."));
+    echo json_encode(["message" => "ไม่พบนิยาย"]);
 }
-?>

@@ -1,12 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+require_once '../../config/init.php';
 
 include_once '../../config/database.php';
 include_once '../../models/Novel.php';
@@ -41,15 +34,16 @@ if (
     if ($novel->create()) {
         http_response_code(201); // 201 Created
         echo json_encode(array(
-            "message" => "Novel was created.",
+            "message" => "สร้างนิยายเรียบร้อยแล้ว",
             "novel_id" => $novel->novel_id // ส่ง novel_id ที่เพิ่งสร้างกลับไปด้วย
         ));
     } else {
         http_response_code(503); // 503 Service Unavailable
-        echo json_encode(array("message" => "Unable to create novel."));
+        echo json_encode(array("message" => "ไม่สามารถสร้างนิยายได้"));
     }
 } else {
     // ถ้าข้อมูลที่ส่งมาไม่ครบ
     http_response_code(400); // 400 Bad Request
-    echo json_encode(array("message" => "Unable to create novel. Data is incomplete. Please provide user_id, title, description, status, and categories (as an array)."));
+    echo json_encode(array("message" => "ไม่สามารถสร้างนิยายได้ ข้อมูลไม่ครบ กรุณาใส่ user_id, title, description, status และ categories (ในรูปแบบ array)"));
 }
+?>

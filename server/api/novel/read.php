@@ -1,6 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
+require_once '../../config/init.php';
 
 include_once '../../config/database.php';
 include_once '../../models/Novel.php';
@@ -28,26 +27,23 @@ if ($num > 0) {
     $novel_arr["records"] = array();
     $novel_arr["totalRecords"] = (int)$totalRecords;
     $novel_arr["totalPages"] = (int)$totalPages;
+    $novel_arr["message"] = $num > 0 ? "ดึงข้อมูลนิยายสำเร็จแล้ว" : "ไม่พบนิยาย";
 
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        extract($row);
-
-        $novel_item = array(
-            "novel_id" => $novel_id,
-            "user_id" => $user_id,
-            "title" => $title,
-            "translator_name" => $translator_name,
-            "description" => $description,
-            "cover_image_url" => $cover_image_url,
-            "status" => $status,
-            "view_count" => (int)$view_count,
-            "chapter_count" => (int)$chapter_count,
-            "display_name" => $display_name,
-            "created_at" => $created_at,
-            "updated_at" => $updated_at
-        );
-
-        array_push($novel_arr["records"], $novel_item);
+        $novel_arr["records"][] = [
+            "novel_id" => $row['novel_id'],
+            "user_id" => $row['user_id'],
+            "title" => $row['title'],
+            "translator_name" => $row['translator_name'],
+            "description" => $row['description'],
+            "cover_image_url" => $row['cover_image_url'],
+            "status" => $row['status'],
+            "view_count" => (int)$row['view_count'],
+            "chapter_count" => (int)$row['chapter_count'],
+            "display_name" => $row['display_name'],
+            "created_at" => $row['created_at'],
+            "updated_at" => $row['updated_at']
+        ];
     }
 
     http_response_code(200);
@@ -57,7 +53,7 @@ if ($num > 0) {
         "records" => [],
         "totalRecords" => (int)$totalRecords,
         "totalPages" => (int)$totalPages,
-        "message" => "No novels found."
+        "message" => "ไม่พบนิยาย"
     );
     http_response_code(200);
     echo json_encode($novel_arr);

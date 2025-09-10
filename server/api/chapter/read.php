@@ -1,6 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
+require_once '../../config/init.php';
 
 include_once '../../config/database.php';
 include_once '../../models/Chapter.php';
@@ -14,7 +13,7 @@ $chapter->novel_id = isset($_GET['novel_id']) ? (int)$_GET['novel_id'] : 0;
 
 if ($chapter->novel_id <= 0) {
     http_response_code(400); // Bad Request
-    echo json_encode(["message" => "Unable to read chapters. novel_id is required."]);
+    echo json_encode(["message" => "ไม่สามารถอ่านตอนนิยายได้ ต้องระบุ novel_id"]);
     return;
 }
 
@@ -42,6 +41,6 @@ if ($num > 0) {
     echo json_encode($chapters_arr);
 } else {
     http_response_code(404);
-    echo json_encode(["message" => "No chapters found for this novel."]);
+    echo json_encode(["message" => "ไม่พบตอนสำหรับนิยายเรื่องนี้"]);
 }
 ?>

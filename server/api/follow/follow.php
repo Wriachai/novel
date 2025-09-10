@@ -1,9 +1,11 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Max-Age: 3600");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+require_once '../../config/init.php';
+
+// --- Handle preflight OPTIONS request ---
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 include_once '../../config/database.php';
 include_once '../../models/Follow.php';
@@ -20,13 +22,13 @@ if (!empty($data->user_id) && !empty($data->novel_id)) {
 
     if ($follow->follow()) {
         http_response_code(201); // Created
-        echo json_encode(["message" => "Successfully followed the novel."]);
+        echo json_encode(["message" => "ติดตามนิยายเรียบร้อยแล้ว"]);
     } else {
         http_response_code(503); // Service Unavailable
-        echo json_encode(["message" => "Unable to follow novel. You might be following it already."]);
+        echo json_encode(["message" => "ไม่สามารถติดตามนิยายได้ อาจติดตามไปแล้ว"]);
     }
 } else {
     http_response_code(400); // Bad Request
-    echo json_encode(["message" => "Unable to follow novel. Data is incomplete."]);
+    echo json_encode(["message" => "ไม่สามารถติดตามนิยายได้ ข้อมูลไม่ครบ"]);
 }
 ?>

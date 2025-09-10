@@ -1,13 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-
-// ตอบ preflight request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+require_once '../../config/init.php';
 
 include_once '../../config/database.php';
 include_once '../../models/Chapter.php';
@@ -32,13 +24,15 @@ if (
 
     if ($chapter->update()) {
         http_response_code(200);
-        echo json_encode(["message" => "Chapter was updated."]);
+        echo json_encode(["message" => "แก้ไขตอนนิยายเรียบร้อยแล้ว"]);
     } else {
         http_response_code(503);
-        echo json_encode(["message" => "Unable to update chapter."]);
+        echo json_encode(["message" => "ไม่สามารถแก้ไขตอนนิยายได้"]);
     }
 } else {
     http_response_code(400);
-    echo json_encode(["message" => "Unable to update chapter. Data is incomplete. Required fields: novel_id, chapter_number, title, content."]);
+    echo json_encode([
+        "message" => "ไม่สามารถแก้ไขตอนนิยายได้ ข้อมูลไม่ครบ ต้องระบุ: novel_id, chapter_number, title, content"
+    ]);
 }
 ?>

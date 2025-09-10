@@ -5,6 +5,10 @@ class Database
     private $db_name = "novels";
     private $username = "root";
     private $password = "";
+    // private $host = "student.crru.ac.th";
+    // private $db_name = "db_661463035";
+    // private $username = "661463035";
+    // private $password = "78473";
     public $conn;
 
     public function getConnection()
@@ -19,4 +23,3 @@ class Database
         return $this->conn;
     }
 }
-?>

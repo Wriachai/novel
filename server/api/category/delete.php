@@ -1,50 +1,34 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: DELETE, OPTIONS");
-header("Access-Control-Max-Age: 3600");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+require_once '../../config/init.php';
 
-// ✅ ตอบกลับ OPTIONS request ทันที (Preflight)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
+require_once '../../config/init.php';
 include_once '../../config/database.php';
-include_once '../../models/Category.php';
+include_once '../../models/Chapter.php';
 
 $database = new Database();
 $db = $database->getConnection();
-
-$category = new Category($db);
+$chapter = new Chapter($db);
 
 $data = json_decode(file_get_contents("php://input"));
 
-if (!empty($data->category_id)) {
-    $category->category_id = $data->category_id;
+// ตรวจสอบข้อมูล
+if (!empty($data->novel_id) && !empty($data->chapter_number)) {
+    $chapter->novel_id = $data->novel_id;
+    $chapter->chapter_number = $data->chapter_number;
+
     try {
-        if ($category->delete()) {
+        if ($chapter->delete()) {
             http_response_code(200);
-            echo json_encode(["message" => "Category was deleted."]);
+            echo json_encode(["message" => "ลบบทเรียบร้อยแล้ว"]);
         } else {
             http_response_code(503);
-            echo json_encode(["message" => "Unable to delete category."]);
+            echo json_encode(["message" => "ไม่สามารถลบบทนี้ได้"]);
         }
     } catch (PDOException $e) {
-        if ($e->getCode() == '23000') {
-            http_response_code(409);
-            echo json_encode([
-                "message" => "Unable to delete category. It is still in use by one or more novels."
-            ]);
-        } else {
-            http_response_code(503);
-            echo json_encode([
-                "message" => "Database error: " . $e->getMessage()
-            ]);
-        }
+        http_response_code(503);
+        echo json_encode(["message" => "เกิดข้อผิดพลาดฐานข้อมูล: " . $e->getMessage()]);
     }
 } else {
     http_response_code(400);
-    echo json_encode(["message" => "Unable to delete category. Data is incomplete."]);
+    echo json_encode(["message" => "ข้อมูลไม่ครบ ต้องระบุ novel_id และ chapter_number"]);
 }

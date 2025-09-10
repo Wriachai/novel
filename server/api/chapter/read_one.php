@@ -1,10 +1,5 @@
 <?php
-// ====== Headers ======
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: access");
-header("Access-Control-Allow-Methods: GET");
-header("Access-Control-Allow-Credentials: true");
-header("Content-Type: application/json; charset=UTF-8");
+require_once '../../config/init.php';
 
 // ====== Include database & model ======
 include_once '../../config/database.php';
@@ -18,7 +13,7 @@ $chapter = new Chapter($db);
 // ====== Validate input ======
 if (!isset($_GET['novel_id']) || !isset($_GET['chapter_number'])) {
     http_response_code(400);
-    echo json_encode(["message" => "Bad Request. novel_id and chapter_number are required."]);
+    echo json_encode(["message" => "ข้อมูลไม่ครบ ต้องระบุ novel_id และ chapter_number"]);
     exit();
 }
 
@@ -41,6 +36,6 @@ if ($chapter->readOne()) {
     echo json_encode($chapter_arr);
 } else {
     http_response_code(404);
-    echo json_encode(["message" => "Chapter does not exist."]);
+    echo json_encode(["message" => "ไม่พบตอนนิยาย"]);
 }
 ?>

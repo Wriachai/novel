@@ -1,8 +1,11 @@
 import React from 'react'
+import FollowDetail from "@/components/account/FollowDetail"
 
 const Follow = () => {
   return (
-    <div>Follow</div>
+    <div className='gap-4 mb-10'>
+      <FollowDetail />
+    </div>
   )
 }
 

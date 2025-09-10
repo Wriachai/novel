@@ -1,16 +1,5 @@
 <?php
-// อนุญาตทุก origin
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: PUT, OPTIONS");
-header("Access-Control-Max-Age: 3600");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-
-// ตอบ preflight request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+require_once '../../config/init.php';
 
 // include database & model
 include_once '../../config/database.php';
@@ -36,9 +25,16 @@ if (
     $oldNovel = $novel->readOne(true);
 
     // ถ้ามี cover เดิม และส่งมาใหม่ → ลบไฟล์เก่า
-    if ($oldNovel && !empty($oldNovel['cover_image_url']) 
-        && $oldNovel['cover_image_url'] !== $data->cover_image_url) {
-        $oldFile = "../../uploads/" . basename($oldNovel['cover_image_url']);
+    if (
+        $oldNovel && !empty($oldNovel['cover_image_url'])
+        && $oldNovel['cover_image_url'] !== $data->cover_image_url
+    ) {
+
+        // ดึงชื่อไฟล์จาก URL
+        $fileName = basename(parse_url($oldNovel['cover_image_url'], PHP_URL_PATH));
+        // path จริงบน server
+        $oldFile = __DIR__ . "/../../image/novel/" . $fileName;
+
         if (file_exists($oldFile)) {
             unlink($oldFile);
         }
@@ -46,8 +42,8 @@ if (
 
     // เซ็ตค่าที่ต้องการอัปเดต
     $novel->title = $data->title;
-    $novel->author_name = $data->author_name;
-    $novel->translator_name = $data->translator_name;
+    $novel->author_name = $data->author_name ?? null;
+    $novel->translator_name = $data->translator_name ?? null;
     $novel->description = $data->description;
     $novel->cover_image_url = $data->cover_image_url;
     $novel->status = $data->status;
@@ -55,12 +51,12 @@ if (
 
     if ($novel->update()) {
         http_response_code(200);
-        echo json_encode(["message" => "Novel was updated."]);
+        echo json_encode(["message" => "อัปเดตนิยายแล้ว"]);
     } else {
         http_response_code(503);
-        echo json_encode(["message" => "Unable to update novel."]);
+        echo json_encode(["message" => "อัปเดตนิยายไม่ได้"]);
     }
 } else {
     http_response_code(400);
-    echo json_encode(["message" => "Unable to update novel. Data is incomplete."]);
+    echo json_encode(["message" => "อัปเดตนิยายไม่ได้ ข้อมูลไม่สมบูรณ์"]);
 }

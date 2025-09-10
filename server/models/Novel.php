@@ -19,6 +19,10 @@ class Novel
 
     public $categories;
 
+    public $comment_count;
+    
+    public $like_count;
+
     public function __construct($db)
     {
         $this->conn = $db;
@@ -32,7 +36,7 @@ class Novel
                 (SELECT COUNT(*) FROM chapters c WHERE c.novel_id = n.novel_id) AS chapter_count
               FROM " . $this->table_name . " n
               LEFT JOIN users u ON n.user_id = u.user_id
-              ORDER BY n.created_at DESC
+              ORDER BY n.updated_at DESC
               LIMIT :limit OFFSET :offset";
 
         $stmt = $this->conn->prepare($query);
@@ -41,7 +45,6 @@ class Novel
         $stmt->execute();
         return $stmt;
     }
-
 
     public function countAll()
     {
@@ -54,18 +57,62 @@ class Novel
     // Read Novel
     public function readMax($limit = 0, $offset = 0)
     {
-        $query = "SELECT n.novel_id, n.user_id, n.title, n.author_name, n.translator_name, n.description, n.cover_image_url, n.status, n.view_count, n.created_at, n.updated_at FROM " . $this->table_name . " as n ORDER BY n.view_count DESC";
+        // join กับ chapter เพื่อนับจำนวนบท
+        $query = "
+        SELECT n.novel_id, n.user_id, n.title, n.author_name, n.translator_name, 
+               n.description, n.cover_image_url, n.status, n.view_count, n.created_at, n.updated_at,
+               COUNT(c.chapter_number) AS chapter_count
+        FROM " . $this->table_name . " AS n
+        LEFT JOIN chapters AS c ON n.novel_id = c.novel_id
+        WHERE n.status != 'draft'
+        GROUP BY n.novel_id
+        ORDER BY n.view_count DESC
+    ";
+
         if ($limit > 0) {
             $query .= " LIMIT :limit OFFSET :offset";
         }
+
         $stmt = $this->conn->prepare($query);
+
         if ($limit > 0) {
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
         }
+
         $stmt->execute();
         return $stmt;
     }
+
+    public function novelUpdate($limit = 0, $offset = 0)
+    {
+        // join กับ chapter เพื่อนับจำนวนบทที่ไม่ใช่ draft
+        $query = "
+        SELECT n.novel_id, n.user_id, n.title, n.author_name, n.translator_name, 
+               n.description, n.cover_image_url, n.status, n.view_count, n.created_at, n.updated_at,
+               COUNT(c.chapter_number) AS chapter_count
+        FROM " . $this->table_name . " AS n
+        LEFT JOIN chapters AS c ON n.novel_id = c.novel_id
+        WHERE n.status != 'draft'
+        GROUP BY n.novel_id
+        ORDER BY n.updated_at DESC
+    ";
+
+        if ($limit > 0) {
+            $query .= " LIMIT :limit OFFSET :offset";
+        }
+
+        $stmt = $this->conn->prepare($query);
+
+        if ($limit > 0) {
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        return $stmt;
+    }
+
 
     public function updateStatus()
     {
@@ -114,9 +161,6 @@ class Novel
             $this->status = htmlspecialchars(strip_tags($this->status));
             $this->view_count = htmlspecialchars(strip_tags($this->view_count));
 
-            $this->created_at = date('Y-m-d H:i:s');
-            $this->updated_at = date('Y-m-d H:i:s');
-
             $stmt->bindParam(":user_id", $this->user_id);
             $stmt->bindParam(":title", $this->title);
             $stmt->bindParam(":author_name", $this->author_name);
@@ -155,24 +199,26 @@ class Novel
     public function readOne($returnArray = false)
     {
         $query = "SELECT
-                n.*,
-                COUNT(DISTINCT ch.chapter_number) as chapter_count,
-                GROUP_CONCAT(DISTINCT cat.category_id SEPARATOR ',') as category_ids,
-                GROUP_CONCAT(DISTINCT cat.name SEPARATOR ',') as category_names
-              FROM " . $this->table_name . " n
-              LEFT JOIN chapters ch ON n.novel_id = ch.novel_id
-              LEFT JOIN novel_category nc ON n.novel_id = nc.novel_id
-              LEFT JOIN categories cat ON nc.category_id = cat.category_id
-              WHERE n.novel_id = :novel_id
-              GROUP BY n.novel_id";
+            n.*,
+            COUNT(DISTINCT ch.chapter_number) AS chapter_count,
+            COUNT(DISTINCT CASE WHEN cm.chapter_number IS NULL THEN cm.comment_id END) AS comment_count,
+            (SELECT COUNT(*) FROM likes l WHERE l.novel_id = n.novel_id) AS like_count,  -- ✅ นับจำนวนไลค์
+            GROUP_CONCAT(DISTINCT cat.category_id SEPARATOR ',') AS category_ids,
+            GROUP_CONCAT(DISTINCT cat.name SEPARATOR ',') AS category_names
+          FROM " . $this->table_name . " n
+          LEFT JOIN chapters ch ON n.novel_id = ch.novel_id
+          LEFT JOIN comments cm ON n.novel_id = cm.novel_id
+          LEFT JOIN novel_category nc ON n.novel_id = nc.novel_id
+          LEFT JOIN categories cat ON nc.category_id = cat.category_id
+          WHERE n.novel_id = :novel_id
+          GROUP BY n.novel_id";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':novel_id', $this->novel_id);
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($row && $row['novel_id'] != null) {
-            // เซ็ตค่า property ของ object
+        if ($row) {
             $this->novel_id = $row['novel_id'];
             $this->title = $row['title'];
             $this->author_name = $row['author_name'];
@@ -183,6 +229,8 @@ class Novel
             $this->view_count = $row['view_count'];
             $this->updated_at = $row['updated_at'];
             $this->chapter_count = $row['chapter_count'];
+            $this->comment_count = $row['comment_count'];
+            $this->like_count = $row['like_count']; // ✅ เพิ่มตรงนี้
 
             // categories
             $this->categories = [];
@@ -197,15 +245,17 @@ class Novel
                 }
             }
 
-            // ถ้าขอ return array ก็ส่งออกไป
             if ($returnArray) {
                 $row['categories'] = $this->categories;
+                $row['comment_count'] = $this->comment_count;
+                $row['like_count'] = $this->like_count; // ✅
                 return $row;
             }
         }
 
         return null;
     }
+
 
     // Update novel
     public function update()
@@ -288,24 +338,24 @@ class Novel
         return false;
     }
 
-    public function search($keywords)
-    {
-        $query = "SELECT n.novel_id, n.user_id, n.title, n.author_name, n.translator_name, n.description, n.cover_image_url, n.status, n.view_count, n.created_at, n.updated_at 
-                  FROM " . $this->table_name . " as n 
-                  LEFT JOIN chapters as c ON n.novel_id = c.novel_id
-                  LEFT JOIN novel_category as nc ON n.novel_id = nc.novel_id
-                  LEFT JOIN categories as cat ON nc.category_id = cat.category_id
-                  where n.status != 'draft' AND  n.title LIKE :keywords OR n.description LIKE :keywords OR cat.name LIKE :keywords
-                  GROUP BY n.novel_id
-                  ORDER BY c.created_at DESC";
-        $stmt = $this->conn->prepare($query);
-        $keywords = htmlspecialchars(strip_tags($keywords));
-        $keywords = "%{$keywords}%";
-        $stmt->bindParam(':keywords', $keywords);
-        $stmt->execute();
+    // public function search($keywords)
+    // {
+    //     $query = "SELECT n.novel_id, n.user_id, n.title, n.author_name, n.translator_name, n.description, n.cover_image_url, n.status, n.view_count, n.created_at, n.updated_at 
+    //               FROM " . $this->table_name . " as n 
+    //               LEFT JOIN chapters as c ON n.novel_id = c.novel_id
+    //               LEFT JOIN novel_category as nc ON n.novel_id = nc.novel_id
+    //               LEFT JOIN categories as cat ON nc.category_id = cat.category_id
+    //               where n.status != 'draft' AND  n.title LIKE :keywords OR n.description LIKE :keywords OR cat.name LIKE :keywords
+    //               GROUP BY n.novel_id
+    //               ORDER BY c.created_at DESC";
+    //     $stmt = $this->conn->prepare($query);
+    //     $keywords = htmlspecialchars(strip_tags($keywords));
+    //     $keywords = "%{$keywords}%";
+    //     $stmt->bindParam(':keywords', $keywords);
+    //     $stmt->execute();
 
-        return $stmt;
-    }
+    //     return $stmt;
+    // }
 
     // Read Novels ของผู้ใช้คนเดียว
     public function readByUser($user_id, $limit = 0, $offset = 0)
@@ -339,6 +389,141 @@ class Novel
         if ($limit > 0) {
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        return $stmt;
+    }
+
+    public function updateView()
+    {
+        // เพิ่ม view_count แต่อย่าให้ updated_at เปลี่ยน
+        $query = "UPDATE novels 
+              SET view_count = view_count + 1,
+              updated_at = updated_at
+              WHERE novel_id = :novel_id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":novel_id", $this->novel_id, PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
+
+    // อ่านนิยายตาม category_id พร้อม pagination
+    public function readByCategory($category_id, $limit = 0, $offset = 0)
+    {
+        // นับ total records ก่อน
+        $countQuery = "
+        SELECT COUNT(DISTINCT n.novel_id) AS total
+        FROM novels AS n
+        LEFT JOIN novel_category AS nc ON n.novel_id = nc.novel_id
+        WHERE n.status != 'draft' AND nc.category_id = :category_id
+    ";
+        $countStmt = $this->conn->prepare($countQuery);
+        $countStmt->bindParam(':category_id', $category_id, PDO::PARAM_INT);
+        $countStmt->execute();
+        $totalRecords = (int)$countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        // Query หลัก
+        $query = "
+        SELECT 
+            n.novel_id, n.user_id, n.title, n.author_name, n.translator_name, 
+            n.description, n.cover_image_url, n.status, n.view_count, n.created_at, n.updated_at,
+            COUNT(ch.chapter_number) AS chapter_count
+        FROM novels AS n
+        LEFT JOIN chapters AS ch ON n.novel_id = ch.novel_id
+        LEFT JOIN novel_category AS nc ON n.novel_id = nc.novel_id
+        WHERE n.status != 'draft' AND nc.category_id = :category_id
+        GROUP BY n.novel_id
+        ORDER BY n.updated_at DESC
+    ";
+
+        if ($limit > 0) {
+            $query .= " LIMIT :limit OFFSET :offset";
+        }
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':category_id', $category_id, PDO::PARAM_INT);
+
+        if ($limit > 0) {
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+
+        return ['stmt' => $stmt, 'totalRecords' => $totalRecords];
+    }
+
+    public function search($limit, $offset, $search = "", $category_id = 0)
+    {
+        $query = "SELECT 
+            n.*,
+            u.display_name,
+            (SELECT COUNT(*) FROM chapters c WHERE c.novel_id = n.novel_id) AS chapter_count
+          FROM novels n
+          LEFT JOIN users u ON n.user_id = u.user_id";
+
+        // ถ้า filter category
+        if ($category_id > 0) {
+            $query .= " INNER JOIN novel_category nc ON nc.novel_id = n.novel_id
+                AND nc.category_id = :category_id";
+        }
+
+        $query .= " WHERE 1=1 and n.status != 'draft'";
+
+        // search filter
+        if (!empty($search)) {
+            $query .= " AND n.title LIKE :search";
+        }
+
+        $query .= " ORDER BY n.updated_at DESC LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+
+        if (!empty($search)) {
+            $searchParam = "%$search%";
+            $stmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
+        }
+
+        if ($category_id > 0) {
+            $stmt->bindParam(':category_id', $category_id, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        return $stmt;
+    }
+
+    // นับ filtered
+    public function countAllFiltered($search = "", $category_id = 0)
+    {
+        $query = "SELECT COUNT(DISTINCT n.novel_id) AS total
+              FROM novels n";
+
+        // ถ้า filter category
+        if ($category_id > 0) {
+            $query .= " INNER JOIN novel_category nc ON nc.novel_id = n.novel_id
+                    AND nc.category_id = :category_id";
+        }
+
+        $query .= " WHERE 1=1";
+
+        // search filter
+        if (!empty($search)) {
+            $query .= " AND n.title LIKE :search";
+        }
+
+        $stmt = $this->conn->prepare($query);
+
+        if (!empty($search)) {
+            $searchParam = "%$search%";
+            $stmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
+        }
+
+        if ($category_id > 0) {
+            $stmt->bindParam(':category_id', $category_id, PDO::PARAM_INT);
         }
 
         $stmt->execute();

@@ -1,13 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
-// Handle preflight OPTIONS request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+require_once '../../config/init.php';
 
 // กำหนดโฟลเดอร์เก็บรูป
 $targetDir = "../../image/novel/";
@@ -22,7 +14,7 @@ if (!empty($_POST["old_url"])) {
     $oldFilePath = "../../" . ltrim($_POST["old_url"], "/");
     if (file_exists($oldFilePath)) {
         if (!unlink($oldFilePath)) {
-            error_log("Failed to delete old file: " . $oldFilePath);
+            error_log("ไม่สามารถลบไฟล์เก่าได้: " . $oldFilePath);
         }
     }
 }
@@ -34,18 +26,18 @@ if (!empty($_FILES["file"]) && $_FILES["file"]["error"] === UPLOAD_ERR_OK) {
 
     if (move_uploaded_file($_FILES["file"]["tmp_name"], $targetFilePath)) {
         echo json_encode([
-            "message" => "Upload successful",
+            "message" => "อัปโหลดสำเร็จ",
             "url" => "/image/novel/" . $fileName
         ]);
     } else {
         http_response_code(500);
-        echo json_encode(["message" => "Failed to move uploaded file"]);
+        echo json_encode(["message" => "ไม่สามารถย้ายไฟล์ที่อัปโหลดได้"]);
     }
 } else {
     // Debug: แสดง error ถ้าไม่มีไฟล์หรือเกิดปัญหา
-    $errorCode = $_FILES["file"]["error"] ?? "No file key";
+    $errorCode = $_FILES["file"]["error"] ?? "ไม่มีคีย์ไฟล์";
     echo json_encode([
-        "message" => "No file uploaded or upload error",
+        "message" => "ไม่มีไฟล์ถูกอัปโหลดหรือเกิดข้อผิดพลาดในการอัปโหลด",
         "error_code" => $errorCode,
         "_FILES" => $_FILES,
         "_POST" => $_POST

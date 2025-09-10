@@ -1,9 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET"); // Search is typically a GET request
-header("Access-Control-Max-Age: 3600");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+require_once '../../config/init.php';
 
 include_once '../../config/database.php';
 include_once '../../models/Novel.php';
@@ -13,48 +9,44 @@ $db = $database->getConnection();
 
 $novel = new Novel($db);
 
-$keywords = isset($_GET['search']) ? $_GET['search'] : '';
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+$offset = ($page - 1) * $limit;
 
-if (!empty($keywords)) {
-    $stmt = $novel->search($keywords);
-    $num = $stmt->rowCount();
+$search = isset($_GET['search']) ? trim($_GET['search']) : "";
+$category_id = isset($_GET['category_id']) ? intval($_GET['category_id']) : 0;
 
-    if ($num > 0) {
-        $novels_arr = array();
-        $novels_arr["records"] = array();
+// อ่านนิยายตาม pagination + search + category
+$stmt = $novel->search($limit, $offset, $search, $category_id);
+$num = $stmt->rowCount();
 
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            extract($row);
+// นับจำนวนทั้งหมด (filtered)
+$stmtTotal = $novel->countAllFiltered($search, $category_id);
+$totalRecords = $stmtTotal->fetchColumn();
+$totalPages = ceil($totalRecords / $limit);
 
-            $novel_item = array(
-                "novel_id" => $novel_id,
-                "user_id" => $user_id,
-                "title" => $title,
-                "author_name" => $author_name,
-                "translator_name" => $translator_name,
-                "description" => $description,
-                "cover_image_url" => $cover_image_url,
-                "status" => $status,
-                "view_count" => $view_count,
-                "created_at" => $created_at,
-                "updated_at" => $updated_at
-            );
-            array_push($novels_arr["records"], $novel_item);
-        }
+$novel_arr = array();
+$novel_arr["records"] = array();
+$novel_arr["totalRecords"] = (int)$totalRecords;
+$novel_arr["totalPages"] = (int)$totalPages;
+$novel_arr["message"] = $num > 0 ? "ดึงข้อมูลนิยายสำเร็จแล้ว" : "ไม่พบนิยาย";
 
-        // set response code - 200 OK
-        http_response_code(200);
-        // show novels in JSON format
-        echo json_encode($novels_arr);
-    } else {
-        // set response code - 404 Not found
-        http_response_code(404);
-        // tell the user no novels found
-        echo json_encode(array("message" => "No novels found matching your search."));
-    }
-} else {
-    // set response code - 400 Bad Request
-    http_response_code(400);
-    // tell the user keywords were not provided
-    echo json_encode(array("message" => "Please provide search keywords (e.g., ?s=keyword)."));
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $novel_arr["records"][] = [
+        "novel_id" => $row['novel_id'],
+        "user_id" => $row['user_id'],
+        "title" => $row['title'],
+        "translator_name" => $row['translator_name'],
+        "description" => $row['description'],
+        "cover_image_url" => $row['cover_image_url'],
+        "status" => $row['status'],
+        "view_count" => (int)$row['view_count'],
+        "chapter_count" => (int)$row['chapter_count'],
+        "display_name" => $row['display_name'],
+        "created_at" => $row['created_at'],
+        "updated_at" => $row['updated_at']
+    ];
 }
+
+http_response_code(200);
+echo json_encode($novel_arr);

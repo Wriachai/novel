@@ -66,11 +66,6 @@ class Chapter
       $this->updated_at = $row['updated_at'];
       $this->novel_title = $row['novel_title'];
 
-      $query_update_view = "UPDATE novels SET view_count = view_count + 1 WHERE novel_id = :novel_id";
-      $stmt_update = $this->conn->prepare($query_update_view);
-      $stmt_update->bindParam(":novel_id", $this->novel_id);
-      $stmt_update->execute();
-
       return true;
     }
 

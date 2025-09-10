@@ -24,5 +24,5 @@ export const updateCategory = async (categoryData) => {
 
 // ลบหมวดหมู่
 export const deleteCategory = async (categoryId) => {
-  return await api.delete("/category/delete.php", { data: { category_id: categoryId } });
+  return await api.post("/category/delete.php", { category_id: categoryId });
 }

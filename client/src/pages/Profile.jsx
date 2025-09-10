@@ -1,8 +1,11 @@
 import React from 'react'
+import ProfileDetail from "@/components/account/ProfileDetail"
 
 const Profile = () => {
   return (
-    <div>Profile</div>
+    <div className='gap-4 mb-10'>
+      <ProfileDetail />
+    </div>
   )
 }
 

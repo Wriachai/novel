@@ -12,11 +12,9 @@ import { ArrowUpDown, ChevronDown, MoreHorizontal, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
-    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
@@ -40,7 +38,6 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 
-
 import { readAllCategory, createCategory, updateCategory, deleteCategory } from "@/api/category";
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
@@ -53,7 +50,6 @@ const DataCategory = () => {
     const [page, setPage] = useState(1)
     const [pageSize] = useState(10)
 
-    // State ฟอร์มใหม่
     const [newName, setNewName] = useState("")
     const [newDescription, setNewDescription] = useState("")
     const [creating, setCreating] = useState(false)
@@ -66,18 +62,26 @@ const DataCategory = () => {
     const [editDescription, setEditDescription] = useState("")
     const [editOpen, setEditOpen] = useState(false)
 
+    const globalFilterFn = (row, columnId, filterValue) => {
+        const search = filterValue.toLowerCase();
+        return (
+            row.original.name?.toLowerCase().includes(search) ||
+            row.original.description?.toLowerCase().includes(search)
+        );
+    };
+
     const fetchCategories = async (pageNumber = 1) => {
         try {
             setLoading(true)
             const res = await readAllCategory(pageNumber, pageSize)
             setData(res.data.records || [])
-            setTotalRecords(res.data.totalRecords || 0)   // API ต้องส่ง totalRecords มาด้วย
-            setTotalPages(Math.ceil((res.data.totalRecords || 0) / pageSize))  // คำนวณ totalPages
+            setTotalRecords(res.data.totalRecords || 0)
+            setTotalPages(Math.ceil((res.data.totalRecords || 0) / pageSize))
             setPage(pageNumber)
         } catch (err) {
             console.error("API ERROR:", err)
-            setError(`Failed to load categories: ${err.message}`)
-            toast.error("Failed to load categories")
+            setError(`ไม่สามารถโหลดหมวดหมู่ได้: ${err.message}`)
+            toast.error("ไม่สามารถโหลดหมวดหมู่ได้")
         } finally {
             setLoading(false)
         }
@@ -88,12 +92,12 @@ const DataCategory = () => {
     }, [])
 
     const handleCreateCategory = async () => {
-        if (!newName.trim()) return toast.error("Name is required");
+        if (!newName.trim()) return toast.error("กรุณากรอกชื่อหมวดหมู่")
         try {
             setCreating(true);
             await createCategory({ name: newName, description: newDescription });
 
-            toast.success("Category created successfully");
+            toast.success("สร้างหมวดหมู่เรียบร้อยแล้ว");
 
             fetchCategories(page);
 
@@ -101,7 +105,7 @@ const DataCategory = () => {
             setNewDescription("");
         } catch (err) {
             console.error("Create ERROR:", err);
-            toast.error("Failed to create category");
+            toast.error("ไม่สามารถสร้างหมวดหมู่ได้");
         } finally {
             setCreating(false);
         }
@@ -124,12 +128,12 @@ const DataCategory = () => {
             })
             setEditOpen(false)
 
-            toast.success("Category updated successfully")
+            toast.success("แก้ไขหมวดหมู่เรียบร้อยแล้ว")
 
             fetchCategories(page);
         } catch (err) {
             console.error("Update ERROR:", err)
-            toast.error("Failed to update category")
+            toast.error("ไม่สามารถแก้ไขหมวดหมู่ได้")
         }
     }
 
@@ -139,11 +143,10 @@ const DataCategory = () => {
     const handleConfirmDelete = async () => {
         try {
             await deleteCategory(deleteCategoryId);
-            toast.success("Category deleted successfully");
+            toast.success("ลบหมวดหมู่เรียบร้อยแล้ว");
             fetchCategories(page);
         } catch (err) {
-            console.error(err);
-            const msg = err.response?.data?.message || "Failed to delete category";
+            const msg = err.response?.data?.message || "ไม่สามารถลบหมวดหมู่ได้";
             toast.error(msg);
         } finally {
             setAlertOpen(false);
@@ -155,30 +158,25 @@ const DataCategory = () => {
         {
             id: "index",
             header: "#",
-            cell: ({ row, table }) => {
-                // ID ใหม่ นับจากหน้า
-                return (page - 1) * pageSize + row.index + 1
-            },
+            cell: ({ row }) => (page - 1) * pageSize + row.index + 1,
         },
         {
             accessorKey: "name",
-            header: "Name",
+            header: "ชื่อหมวดหมู่",
             cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
         },
         {
             accessorKey: "description",
-            header: "Description",
-            cell: ({ row }) => (
-                <div className="text-muted-foreground">{row.getValue("description")}</div>
-            ),
+            header: "รายละเอียด",
+            cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("description")}</div>,
         },
         {
             accessorKey: "created_at",
-            header: "Created At",
+            header: "สร้างเมื่อ",
         },
         {
             accessorKey: "updated_at",
-            header: "Updated At",
+            header: "แก้ไขเมื่อ",
         },
         {
             id: "actions",
@@ -189,33 +187,25 @@ const DataCategory = () => {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
+                                <span className="sr-only">เปิดเมนู</span>
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            {/* <DropdownMenuItem
-                                onClick={() =>
-                                    navigator.clipboard.writeText(
-                                        category.category_id.toString()
-                                    )
-                                }
-                            >
-                                Copy category ID
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>View details</DropdownMenuItem> */}
+                            <DropdownMenuLabel className={"font-bold"}>ตัวเลือก</DropdownMenuLabel>
                             <DropdownMenuItem onClick={() => openEditDialog(category)}>
-                                Edit
+                                แก้ไข
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => {
                                     setDeleteCategoryId(category.category_id);
                                     setAlertOpen(true);
-                                }}>
-                                <div className={"text-red-600 hover:text-red-700"}>Delete</div>
-
+                                }}
+                                disabled={category.novel_count > 0} // ป้องกันลบ
+                            >
+                                <div className={category.novel_count > 0 ? "text-gray-400" : "text-red-600 hover:text-red-700"}>
+                                    ลบ
+                                </div>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -231,9 +221,10 @@ const DataCategory = () => {
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
+        globalFilterFn,
     })
 
-    if (loading) return <div className="p-4">Loading categories...</div>
+    if (loading) return <div className="p-4">กำลังโหลดหมวดหมู่...</div>
     if (error) return <div className="p-4 text-red-500">{error}</div>
 
     return (
@@ -241,17 +232,15 @@ const DataCategory = () => {
             {/* Toolbar */}
             <div className="flex items-center py-4 gap-2">
                 <Input
-                    placeholder="Filter by name..."
-                    value={table.getColumn("name")?.getFilterValue() ?? ""}
-                    onChange={(e) =>
-                        table.getColumn("name")?.setFilterValue(e.target.value)
-                    }
+                    placeholder="ค้นหาหมวดหมู่..."
+                    value={table.getState().globalFilter ?? ""}
+                    onChange={(e) => table.setGlobalFilter(e.target.value)}
                     className="max-w-sm"
                 />
                 <Dialog>
                     <DialogTrigger asChild>
                         <Button variant="default" className="ml-2">
-                            <Plus className="mr-2 h-4 w-4" /> Add Category
+                            <Plus className="mr-2 h-4 w-4" /> เพิ่มหมวดหมู่
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px] bg-white rounded-md p-4 opacity-0 animate-fade-in"
@@ -260,9 +249,9 @@ const DataCategory = () => {
                             animationFillMode: "forwards",
                         }}>
                         <DialogHeader>
-                            <DialogTitle>Add New Category</DialogTitle>
+                            <DialogTitle>เพิ่มหมวดหมู่ใหม่</DialogTitle>
                             <DialogDescription>
-                                ใส่ข้อมูลหมวดหมู่ใหม่ของคุณที่นี่
+                                กรอกข้อมูลหมวดหมู่ใหม่ของคุณที่นี่
                             </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={(e) => {
@@ -271,13 +260,13 @@ const DataCategory = () => {
                         }}>
                             <div className="space-y-2 py-2">
                                 <Input
-                                    placeholder="Name"
+                                    placeholder="ชื่อหมวดหมู่"
                                     value={newName}
                                     required
                                     onChange={(e) => setNewName(e.target.value)}
                                 />
                                 <Input
-                                    placeholder="Description"
+                                    placeholder="รายละเอียด"
                                     value={newDescription}
                                     required
                                     onChange={(e) => setNewDescription(e.target.value)}
@@ -285,10 +274,10 @@ const DataCategory = () => {
                             </div>
                             <DialogFooter>
                                 <DialogClose asChild>
-                                    <Button variant="outline">Cancel</Button>
+                                    <Button variant="outline">ยกเลิก</Button>
                                 </DialogClose>
                                 <Button type="submit" disabled={creating}>
-                                    {creating ? "Adding..." : "Add"}
+                                    {creating ? "กำลังเพิ่ม..." : "เพิ่ม"}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -296,12 +285,12 @@ const DataCategory = () => {
                 </Dialog>
             </div>
 
+            {/* Edit Dialog */}
             <Dialog open={editOpen} onOpenChange={setEditOpen}>
                 <DialogContent className="sm:max-w-[425px] bg-white rounded-md p-4 opacity-0 animate-fade-in"
-                    style={{ animationDuration: "0.2s", animationFillMode: "forwards" }}
-                >
+                    style={{ animationDuration: "0.2s", animationFillMode: "forwards" }}>
                     <DialogHeader>
-                        <DialogTitle>Edit Category</DialogTitle>
+                        <DialogTitle>แก้ไขหมวดหมู่</DialogTitle>
                         <DialogDescription>
                             แก้ไขข้อมูลหมวดหมู่ของคุณที่นี่
                         </DialogDescription>
@@ -309,13 +298,13 @@ const DataCategory = () => {
                     <form onSubmit={handleUpdateCategory}>
                         <div className="space-y-2 py-2">
                             <Input
-                                placeholder="Name"
+                                placeholder="ชื่อหมวดหมู่"
                                 value={editName}
                                 required
                                 onChange={(e) => setEditName(e.target.value)}
                             />
                             <Input
-                                placeholder="Description"
+                                placeholder="รายละเอียด"
                                 value={editDescription}
                                 required
                                 onChange={(e) => setEditDescription(e.target.value)}
@@ -323,34 +312,33 @@ const DataCategory = () => {
                         </div>
                         <DialogFooter>
                             <DialogClose asChild>
-                                <Button variant="outline">Cancel</Button>
+                                <Button variant="outline">ยกเลิก</Button>
                             </DialogClose>
-                            <Button type="submit">
-                                Save
-                            </Button>
+                            <Button type="submit">บันทึก</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
 
+            {/* Delete Confirmation */}
             <Dialog open={alertOpen} onOpenChange={setAlertOpen}>
                 <DialogContent className="sm:max-w-[425px] bg-white rounded-md p-4 opacity-0 animate-fade-in"
                     style={{ animationDuration: "0.2s", animationFillMode: "forwards" }}>
                     <DialogHeader>
-                        <DialogTitle>Are you sure?</DialogTitle>
+                        <DialogTitle>คุณแน่ใจหรือไม่?</DialogTitle>
                         <DialogDescription>
-                            This action cannot be undone. This will permanently delete this category.
+                            การลบหมวดหมู่นี้ไม่สามารถย้อนกลับได้
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
+                            <Button variant="outline">ยกเลิก</Button>
                         </DialogClose>
                         <Button
                             className=" bg-red-600 text-white rounded hover:bg-red-700"
                             onClick={handleConfirmDelete}
                         >
-                            Delete
+                            ลบ
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -378,11 +366,7 @@ const DataCategory = () => {
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    className="hover:bg-muted/20"
-                                    data-state={row.getIsSelected() && "selected"}
-                                >
+                                <TableRow key={row.id} className="hover:bg-muted/20">
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id} className="px-4 py-2">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -393,17 +377,17 @@ const DataCategory = () => {
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    No results.
+                                    ไม่พบข้อมูล
                                 </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
                 </Table>
             </div>
+
             <div className="flex items-center justify-between text-sm text-gray-500 py-4">
                 <div>
-                    Page {page} of {totalPages} 
-                    {/* : Showing {data.length} records */}
+                    หน้า {page} จาก {totalPages}
                 </div>
                 <div className="flex space-x-2">
                     <Button
@@ -412,7 +396,7 @@ const DataCategory = () => {
                         onClick={() => fetchCategories(page - 1)}
                         disabled={page <= 1}
                     >
-                        Previous
+                        ก่อนหน้า
                     </Button>
                     <Button
                         variant="outline"
@@ -420,7 +404,7 @@ const DataCategory = () => {
                         onClick={() => fetchCategories(page + 1)}
                         disabled={page >= totalPages}
                     >
-                        Next
+                        ถัดไป
                     </Button>
                 </div>
             </div>

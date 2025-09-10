@@ -35,7 +35,7 @@ const RegisterForm = () => {
     e.preventDefault();
 
     if (formData.password !== formData.confirm_password) {
-      toast.error("Passwords do not match ❌");
+      toast.error("รหัสผ่านไม่ตรงกัน");
       return;
     }
 
@@ -50,7 +50,7 @@ const RegisterForm = () => {
         password: formData.password,
       });
 
-      toast.success(res.data.message);
+      toast.success(res.data.message || "สมัครสมาชิกสำเร็จ");
 
       setFormData({
         firstname: "",
@@ -63,8 +63,8 @@ const RegisterForm = () => {
 
       if (res.status === 201) navigate("/login");
     } catch (err) {
-      const errMsg = err.response?.data?.message || "Something went wrong";
-      toast.error(err.response?.data?.message || "Something went wrong"); // ข้อความ error
+      const errMsg = err.response?.data?.message || "เกิดข้อผิดพลาด";
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -73,52 +73,50 @@ const RegisterForm = () => {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Create an account</CardTitle>
-        <CardDescription>Register with your email</CardDescription>
+        <CardTitle className="text-2xl">สร้างบัญชีใหม่</CardTitle>
+        <CardDescription>สมัครสมาชิกด้วยอีเมลของคุณ</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="grid gap-1">
-              <Label htmlFor="firstname">First Name</Label>
+              <Label htmlFor="firstname">ชื่อ</Label>
               <Input id="firstname" value={formData.firstname} onChange={handleChange} required />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="lastname">Last Name</Label>
+              <Label htmlFor="lastname">นามสกุล</Label>
               <Input id="lastname" value={formData.lastname} onChange={handleChange} required />
             </div>
           </div>
 
           <div className="grid gap-1">
-            <Label htmlFor="display_name">Display Name</Label>
+            <Label htmlFor="display_name">ชื่อแสดง</Label>
             <Input id="display_name" value={formData.display_name} onChange={handleChange} required />
           </div>
 
           <div className="grid gap-1">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">อีเมล</Label>
             <Input id="email" type="email" value={formData.email} onChange={handleChange} required />
           </div>
 
           <div className="grid gap-1">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">รหัสผ่าน</Label>
             <Input id="password" type="password" value={formData.password} onChange={handleChange} required />
           </div>
 
           <div className="grid gap-1">
-            <Label htmlFor="confirm_password">Confirm Password</Label>
+            <Label htmlFor="confirm_password">ยืนยันรหัสผ่าน</Label>
             <Input id="confirm_password" type="password" value={formData.confirm_password} onChange={handleChange} required />
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Registering..." : "Register"}
+            {loading ? "กำลังสมัคร..." : "สมัครสมาชิก"}
           </Button>
 
-          {/* {message && <p className="text-center text-sm mt-2 text-red-600">{message}</p>} */}
-
           <p className="text-center text-sm mt-4">
-            Already have an account?{" "}
+            มีบัญชีแล้ว?{" "}
             <NavLink to="/login" className="underline underline-offset-4">
-              Login
+              เข้าสู่ระบบ
             </NavLink>
           </p>
         </form>

@@ -9,16 +9,16 @@ import { Link, useLocation } from "react-router-dom";
 const SiteHeader = () => {
   const location = useLocation()
 
-  // map path -> title
+  // map path -> title (ภาษาไทย)
   const titles = {
-    "/admin": "Dashboard",
-    "/admin/novel": "Novel",
-    "/admin/user": "User",
-    "/admin/category": "Category",
-    "/admin/mynovel": "MyNovel",
+    "/admin": "แดชบอร์ด",
+    "/admin/novel": "นิยาย",
+    "/admin/user": "ผู้ใช้งาน",
+    "/admin/category": "หมวดหมู่",
+    "/admin/mynovel": "นิยายของฉัน",
   }
 
-  const currentTitle = titles[location.pathname] || "Admin Dashboard"
+  const currentTitle = titles[location.pathname] || "แดชบอร์ดผู้ดูแลระบบ"
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -31,14 +31,7 @@ const SiteHeader = () => {
         <h1 className="text-base font-medium">{currentTitle}</h1>
         <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
-            {/* <a
-              href="https://github.com/shadcn-ui/ui/tree/main/apps/v4/app/(examples)/dashboard"
-              rel="noopener noreferrer"
-              target="_blank"
-              className="dark:text-foreground"
-            >
-              GitHub
-            </a> */}
+            {/* สามารถเพิ่มลิงก์อื่น ๆ ได้ที่นี่ */}
           </Button>
         </div>
       </div>

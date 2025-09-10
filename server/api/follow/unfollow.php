@@ -1,9 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: DELETE");
-header("Access-Control-Max-Age: 3600");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+require_once '../../config/init.php';
 
 include_once '../../config/database.php';
 include_once '../../models/Follow.php';
@@ -19,14 +15,14 @@ if (!empty($data->user_id) && !empty($data->novel_id)) {
     $follow->novel_id = $data->novel_id;
 
     if ($follow->unfollow()) {
-        http_response_code(200); // OK
-        echo json_encode(["message" => "Successfully unfollowed the novel."]);
+        http_response_code(200);
+        echo json_encode(["message" => "เลิกติดตามนิยายเรียบร้อยแล้ว"]);
     } else {
-        http_response_code(503); // Service Unavailable
-        echo json_encode(["message" => "Unable to unfollow novel. You might not be following it."]);
+        http_response_code(503);
+        echo json_encode(["message" => "ไม่สามารถเลิกติดตามนิยายได้ อาจจะยังไม่ได้ติดตามอยู่"]);
     }
 } else {
-    http_response_code(400); // Bad Request
-    echo json_encode(["message" => "Unable to unfollow novel. Data is incomplete."]);
+    http_response_code(400);
+    echo json_encode(["message" => "ไม่สามารถเลิกติดตามนิยายได้ ข้อมูลไม่ครบ"]);
 }
 ?>

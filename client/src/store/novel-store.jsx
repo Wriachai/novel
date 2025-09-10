@@ -9,10 +9,10 @@ const api = axios.create({
 
 const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({ // <-- เพิ่ม get
       user: null,
       token: null,
-      
+
       // Login action
       actionLogin: async (formData) => {
         const res = await api.post("/user/login.php", formData);
@@ -26,6 +26,11 @@ const useAuthStore = create(
       // Logout action
       actionLogout: () => {
         set({ user: null, token: null });
+      },
+
+      // อัปเดต user ใน store
+      actionSetUser: (newUserData) => {
+        set({ user: { ...get().user, ...newUserData } });
       },
     }),
     {

@@ -1,15 +1,5 @@
 <?php
-// อนุญาต origin frontend ของคุณ
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); // เพิ่ม GET/POST/PUT/OPTIONS
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-
-// ตอบ preflight request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+require_once '../../config/init.php';
 
 include_once '../../config/database.php';
 include_once '../../models/Chapter.php';
@@ -30,12 +20,13 @@ if (
 
     if ($chapter->delete()) {
         http_response_code(200);
-        echo json_encode(["message" => "Chapter was deleted."]);
+        echo json_encode(["message" => "ลบตอนนิยายเรียบร้อยแล้ว"]);
     } else {
         http_response_code(503);
-        echo json_encode(["message" => "Unable to delete chapter. It might not exist."]);
+        echo json_encode(["message" => "ไม่สามารถลบตอนนิยายได้ อาจไม่มีตอนนี้อยู่ในระบบ"]);
     }
 } else {
     http_response_code(400);
-    echo json_encode(["message" => "Unable to delete chapter. Data is incomplete. novel_id and chapter_number are required."]);
+    echo json_encode(["message" => "ไม่สามารถลบตอนนิยายได้ ข้อมูลไม่ครบ ต้องระบุ novel_id และ chapter_number"]);
 }
+?>

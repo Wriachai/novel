@@ -38,3 +38,29 @@ export const updateNovel = async (novelData) => {
       : [], // ✅ แปลงให้แน่ใจว่าเป็น array
   });
 };
+
+export const readMax = async (limit = 12, offset = 0) => {
+  return await api.get("/novel/read_max.php", { params: { limit, offset } });
+};
+
+export const readUpdate = async (limit = 12, offset = 0) => {
+  return await api.get("/novel/novelUpdate.php", { params: { limit, offset } });
+};
+
+export const readNovelByCategory = async (categoryId, page = 1, limit = 20) => {
+  return await api.get("/novel/read_by_category.php", {
+    params: { category_id: categoryId, page, limit }
+  });
+};
+
+export const searchAllNovel = async (page = 1, limit = 10, search = "", category_id = null) => {
+  const params = { page, limit };
+  if (search) params.search = search;
+  if (category_id !== null) params.category_id = category_id;
+
+  return await api.get("/novel/search.php", { params });
+};
+
+export const deleteNovel = async (novel_id) => {
+  return await api.post("/novel/delete.php", { data: { novel_id } });
+};

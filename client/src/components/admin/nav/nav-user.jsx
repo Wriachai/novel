@@ -4,8 +4,9 @@ import {
   IconCreditCard,
   IconDotsVertical,
   IconLogout,
-  IconNotification,
   IconUserCircle,
+  IconUser,
+  IconHome
 } from "@tabler/icons-react"
 
 import {
@@ -31,8 +32,23 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-const NavUser = ({ user }) => {
+import useAuthStore from "@/store/novel-store";
+import { NavLink, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Home } from "lucide-react"
+
+const NavUser = () => {
   const { isMobile } = useSidebar()
+  const { user } = useAuthStore();
+  const actionLogout = useAuthStore((state) => state.actionLogout);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    actionLogout();
+    toast.success("ออกจากระบบเรียบร้อย 🎉");
+    navigate("/login");
+  };
 
   return (
     <SidebarMenu>
@@ -44,11 +60,12 @@ const NavUser = ({ user }) => {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback>
+                  <IconUser />
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{user.display_name}</span>
                 <span className="text-muted-foreground truncate text-xs">
                   {user.email}
                 </span>
@@ -65,11 +82,12 @@ const NavUser = ({ user }) => {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback>
+                    <IconUser />
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">{user.display_name}</span>
                   <span className="text-muted-foreground truncate text-xs">
                     {user.email}
                   </span>
@@ -78,23 +96,19 @@ const NavUser = ({ user }) => {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <IconUserCircle />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                Notifications
-              </DropdownMenuItem>
+              <NavLink to={"/"}>
+                <DropdownMenuItem>
+                  <IconHome />
+                  หน้าแรก
+                </DropdownMenuItem>
+              </NavLink>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <IconLogout />
-              Log out
+            <DropdownMenuItem onClick={handleLogout} >
+              <IconLogout className="text-red-600" />
+              <div className="text-red-600">
+                ออกจากระบบ
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

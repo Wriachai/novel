@@ -22,11 +22,11 @@ const LoginForm = () => {
     setLoading(true);
     try {
       const res = await actionLogin(formData);
-      toast.success(res.message || "Login successful 🎉");
+      toast.success(res.message || "เข้าสู่ระบบสำเร็จ");
       const role = res.user.role;
       roleRedirect(role);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Login failed ❌");
+      toast.error(err.response?.data?.message || "เข้าสู่ระบบล้มเหลว");
     } finally {
       setLoading(false);
     }
@@ -36,11 +36,11 @@ const LoginForm = () => {
     setLoading(true);
     try {
       const res = await actionLogin({ google_token: credentialResponse.credential });
-      toast.success(res.message || "Google login success 🎉");
+      toast.success(res.message || "เข้าสู่ระบบด้วย Google สำเร็จ");
       const role = res.user.role;
       roleRedirect(role);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Google login failed ❌");
+      toast.error(err.response?.data?.message || "เข้าสู่ระบบด้วย Google ล้มเหลว");
     } finally {
       setLoading(false);
     }
@@ -57,25 +57,25 @@ const LoginForm = () => {
   return (
     <Card className="text-center">
       <CardHeader>
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
-        <CardDescription>Login with Google or your email</CardDescription>
+        <CardTitle className="text-2xl">ยินดีต้อนรับกลับ</CardTitle>
+        <CardDescription>เข้าสู่ระบบด้วย Google หรืออีเมลของคุณ</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-4 mb-4">
           <GoogleLogin
             onSuccess={handleGoogleLogin}
-            onError={() => toast.error("Google login failed ❌")}
+            onError={() => toast.error("เข้าสู่ระบบด้วย Google ล้มเหลว")}
           />
         </div>
         <div className="mb-5 mt-5 after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
           <span className="bg-card text-muted-foreground relative z-10 px-2">
-            Or continue with
+            หรือเข้าสู่ระบบต่อด้วย
           </span>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6">
             <div className="grid gap-3">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">อีเมล</Label>
               <Input
                 id="email"
                 type="email"
@@ -85,7 +85,7 @@ const LoginForm = () => {
               />
             </div>
             <div className="grid gap-3">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">รหัสผ่าน</Label>
               <Input
                 id="password"
                 type="password"
@@ -95,14 +95,14 @@ const LoginForm = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
             </Button>
           </div>
         </form>
         <div className="text-center text-sm mt-4">
-          Don&apos;t have an account?{" "}
+          ยังไม่มีบัญชี?{" "}
           <NavLink to="/register" className="underline">
-            Sign up
+            สมัครสมาชิก
           </NavLink>
         </div>
       </CardContent>

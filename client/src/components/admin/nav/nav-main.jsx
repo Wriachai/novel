@@ -17,7 +17,7 @@ import {
   IconUser,
 } from "@tabler/icons-react"
 
-const NavMain = ({ items }) => {
+const NavMain = () => {
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -31,35 +31,7 @@ const NavMain = ({ items }) => {
                     ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
                     : "hover:bg-primary/5"}`}>
                   <IconDashboard />
-                  <span>Dashboard</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
-          </NavLink>
-
-          <NavLink to="novel">
-            {({ isActive }) => (
-              <SidebarMenuItem className="flex items-center gap-2 pb-1">
-                <SidebarMenuButton
-                  className={`${isActive
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
-                    : "hover:bg-primary/5"}`}>
-                  <IconBook />
-                  <span>Novel</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
-          </NavLink>
-
-          <NavLink to="category">
-            {({ isActive }) => (
-              <SidebarMenuItem className="flex items-center gap-2 pb-1">
-                <SidebarMenuButton
-                  className={`${isActive
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
-                    : "hover:bg-primary/5"}`}>
-                  <IconBooks />
-                  <span>Category</span>
+                  <span>แดชบอร์ด</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
@@ -73,7 +45,35 @@ const NavMain = ({ items }) => {
                     ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
                     : "hover:bg-primary/5"}`}>
                   <IconUser />
-                  <span>User</span>
+                  <span>ผู้ใช้งาน</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+          </NavLink>
+
+          <NavLink to="novel">
+            {({ isActive }) => (
+              <SidebarMenuItem className="flex items-center gap-2 pb-1">
+                <SidebarMenuButton
+                  className={`${isActive
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
+                    : "hover:bg-primary/5"}`}>
+                  <IconBook />
+                  <span>นิยาย</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+          </NavLink>
+
+          <NavLink to="category">
+            {({ isActive }) => (
+              <SidebarMenuItem className="flex items-center gap-2 pb-1">
+                <SidebarMenuButton
+                  className={`${isActive
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
+                    : "hover:bg-primary/5"}`}>
+                  <IconBooks />
+                  <span>หมวดหมู่</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
